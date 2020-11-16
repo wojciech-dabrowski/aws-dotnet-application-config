@@ -1,12 +1,85 @@
 Transform: AWS::Serverless-2016-10-31
-Description: Example of Lambda Functions in .NET Core
+Description: Example of configuring Lambda Functions in .NET Core
+
+Parameters:
+  Environment:
+    Default: Dev
+    Type: String
+  ParameterStorePrefix:
+    Default: DotnetConfig
+    Type: String
+  AppConfigApplicationId:
+    Default: DotnetConfig
+    Type: String
+
 Resources:
+  
+  # App Config
+  AppConfigApplication:
+    Type: AWS::AppConfig::Application
+    Properties:
+      Name: DotnetConfigApplication
+      Description: A sample test application.
+
+  AppConfigConfigurationProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      Name: DotnetConfigurationProfile
+      Description: My test configuration profile.
+      LocationUri: hosted
+  
+  AppConfigEnvironment:
+    Type: AWS::AppConfig::Environment
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      Name: !Sub ${Environment}
+      Description: My test environment.
+      
+  # Lambda
   GetConfigLambda:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: parameter-store-integration
+      Role: !GetAtt LambdaRole.Arn
       Handler: AwsApplicationConfig.Lambda::AwsApplicationConfig.Lambda.GetConfigLambda::Invoke
       Runtime: dotnetcore3.1
       CodeUri: bin/Release/netcoreapp3.1/publish
       MemorySize: 256
       Timeout: 10
+      Environment:
+        Variables:
+          APP_CONFIG_APP_ID: !Sub ${AppConfigApplication}
+          APP_CONFIG_CONFIG_PROFILE_ID: !Sub ${AppConfigConfigurationProfile}
+          APP_CONFIG_ENVIRONMENT_ID: !Sub ${AppConfigEnvironment}
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Policies:
+        - PolicyName: allow-to-use-parameter-store
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParametersByPath
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStorePrefix}
+        - PolicyName: allow-to-use-app-config
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: appconfig:GetConfiguration
+                Resource:
+                  - !Sub arn:aws:appconfig:${AWS::Region}:${AWS::AccountId}:application/${AppConfigApplication}
+                  - !Sub arn:aws:appconfig:${AWS::Region}:${AWS::AccountId}:application/${AppConfigApplication}/configurationprofile/${AppConfigConfigurationProfile}
+                  - !Sub arn:aws:appconfig:${AWS::Region}:${AWS::AccountId}:application/${AppConfigApplication}/environment/${AppConfigEnvironment}
