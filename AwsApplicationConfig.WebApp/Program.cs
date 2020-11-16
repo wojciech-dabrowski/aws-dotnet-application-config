@@ -1,4 +1,6 @@
+using System;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace AwsApplicationConfig.WebApp
@@ -9,18 +11,18 @@ namespace AwsApplicationConfig.WebApp
 
         public static IHostBuilder CreateHostBuilder(string[] args)
             => Host.CreateDefaultBuilder(args)
-                    // .ConfigureAppConfiguration(
-                    //      builder =>
-                    //      {
-                    //          builder.AddSystemsManager(
-                    //              configureSource =>
-                    //              {
-                    //                  configureSource.Path = "/DotnetConfig";
-                    //                  configureSource.ReloadAfter = TimeSpan.FromMinutes(5);
-                    //              }
-                    //          );
-                    //      }
-                    //  )
+                   .ConfigureAppConfiguration(
+                        builder =>
+                        {
+                            builder.AddSystemsManager(
+                                configureSource =>
+                                {
+                                    configureSource.Path = "/DotnetConfig";
+                                    configureSource.ReloadAfter = TimeSpan.FromMinutes(5);
+                                }
+                            );
+                        }
+                    )
                    .ConfigureWebHostDefaults(
                         webBuilder =>
                         {
