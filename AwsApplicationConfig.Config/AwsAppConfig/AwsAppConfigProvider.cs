@@ -4,33 +4,29 @@ using System.Threading.Tasks;
 using Amazon.AppConfig;
 using Amazon.AppConfig.Model;
 
-namespace AwsApplicationConfig.Config
+namespace AwsApplicationConfig.Config.AwsAppConfig
 {
-    public class AwsAppConfigReader
+    public class AwsAppConfigProvider
     {
-        private readonly string _applicationId;
-        private readonly string _environmentId;
-        private readonly string _clientId;
-        private readonly string _configurationProfileId;
         private readonly IAmazonAppConfig _appConfigClient;
+        private readonly string _clientId;
+        private readonly AwsAppConfigConfiguration _configuration;
 
-        public AwsAppConfigReader(string applicationId, string environmentId, string clientId, string configurationProfileId, IAmazonAppConfig appConfigClient = null)
+        public AwsAppConfigProvider(AwsAppConfigConfiguration configuration, string clientId, IAmazonAppConfig appConfigClient = null)
         {
-            _applicationId = applicationId;
-            _environmentId = environmentId;
+            _configuration = configuration;
             _clientId = clientId;
-            _configurationProfileId = configurationProfileId;
             _appConfigClient = appConfigClient ?? new AmazonAppConfigClient();
         }
 
-        public async Task<ConfigModel> GetConfig()
+        public async Task<ConfigModel> GetConfigAsync()
         {
             var request = new GetConfigurationRequest
             {
-                Application = _applicationId,
-                Environment = _environmentId,
+                Application = _configuration.ApplicationId,
+                Environment = _configuration.EnvironmentId,
                 ClientId = _clientId,
-                Configuration = _configurationProfileId
+                Configuration = _configuration.ConfigProfileId
             };
 
             var response = await _appConfigClient.GetConfigurationAsync(request);

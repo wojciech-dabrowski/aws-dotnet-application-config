@@ -4,11 +4,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace AwsApplicationConfig.Lambda
 {
-    public static class ConfigurationReader
+    public static class ParameterStoreConfigurationReader
     {
         private static readonly IConfigurationRoot Config;
 
-        static ConfigurationReader()
+        static ParameterStoreConfigurationReader()
         {
             var configurationBuilder = new ConfigurationBuilder()
                                       .AddEnvironmentVariables()

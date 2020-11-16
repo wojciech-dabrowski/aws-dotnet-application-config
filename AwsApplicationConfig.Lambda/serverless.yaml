@@ -11,6 +11,21 @@ Parameters:
   AppConfigApplicationId:
     Default: DotnetConfig
     Type: String
+  AppConfigExtensionPort:
+    Default: 2772
+    Type: Number
+
+Globals:
+  Function:
+    Runtime: dotnetcore3.1
+    Timeout: 10
+    MemorySize: 256
+    CodeUri: bin/Release/netcoreapp3.1/publish
+    Environment:
+      Variables:
+        APP_CONFIG_APP_ID: !Sub ${AppConfigApplication}
+        APP_CONFIG_CONFIG_PROFILE_ID: !Sub ${AppConfigConfigurationProfile}
+        APP_CONFIG_ENVIRONMENT_ID: !Sub ${AppConfigEnvironment}
 
 Resources:
   
@@ -33,7 +48,7 @@ Resources:
     Type: AWS::AppConfig::Environment
     Properties:
       ApplicationId: !Ref AppConfigApplication
-      Name: !Sub ${Environment}
+      Name: !Ref Environment
       Description: My test environment.
       
   # Lambda
@@ -41,17 +56,20 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Role: !GetAtt LambdaRole.Arn
-      Handler: AwsApplicationConfig.Lambda::AwsApplicationConfig.Lambda.GetConfigLambda::Invoke
-      Runtime: dotnetcore3.1
-      CodeUri: bin/Release/netcoreapp3.1/publish
-      MemorySize: 256
-      Timeout: 10
+      Handler: AwsApplicationConfig.Lambda::AwsApplicationConfig.Lambda.Functions.GetConfigLambda::Invoke
+
+  GetConfigUsingExtensionLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      Handler: AwsApplicationConfig.Lambda::AwsApplicationConfig.Lambda.Functions.GetConfigUsingExtensionLambda::Invoke
+      Layers:
+        - arn:aws:lambda:eu-west-1:434848589818:layer:AWS-AppConfig-Extension:11
       Environment:
         Variables:
-          APP_CONFIG_APP_ID: !Sub ${AppConfigApplication}
-          APP_CONFIG_CONFIG_PROFILE_ID: !Sub ${AppConfigConfigurationProfile}
-          APP_CONFIG_ENVIRONMENT_ID: !Sub ${AppConfigEnvironment}
-
+          AWS_APPCONFIG_EXTENSION_POLL_INTERVAL_SECONDS: 120
+          AWS_APPCONFIG_EXTENSION_HTTP_PORT: !Ref AppConfigExtensionPort
+  
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
