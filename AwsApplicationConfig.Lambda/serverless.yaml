@@ -1,0 +1,12 @@
+Transform: AWS::Serverless-2016-10-31
+Description: Example of Lambda Functions in .NET Core
+Resources:
+  GetConfigLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: parameter-store-integration
+      Handler: AwsApplicationConfig.Lambda::AwsApplicationConfig.Lambda.GetConfigLambda::Invoke
+      Runtime: dotnetcore3.1
+      CodeUri: bin/Release/netcoreapp3.1/publish
+      MemorySize: 256
+      Timeout: 10
